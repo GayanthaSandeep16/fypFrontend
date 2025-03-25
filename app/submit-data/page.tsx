@@ -30,7 +30,6 @@ export default function Upload() {
     ];
 
     const handleModelSelect = (modelId: string) => setSelectedModel(modelId);
-
     const handleFileDrop = (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
         const droppedFile = e.dataTransfer.files[0];
@@ -57,7 +56,7 @@ export default function Upload() {
         const formData = new FormData();
         formData.append("files", file);
         formData.append("clerkUserId", user.id);
-        formData.append("walletAddress", user?.unsafeMetadata?.walletAddress || "0x1C22aC6e05d1d32De03EfEB20438DBbB8c98b141");
+        formData.append("walletAddress", user?.unsafeMetadata?.walletAddress || "0x59C6D89CF29B4Be21AB08b62C1db4694A77B6f0f");
         formData.append("modelId", selectedModel);
 
         try {
