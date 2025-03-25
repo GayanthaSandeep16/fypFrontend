@@ -5,6 +5,7 @@ import { BsUpload, BsShieldCheck, BsCodeSquare, BsDatabase } from "react-icons/b
 import axios from "axios";
 import { useUser } from "@clerk/nextjs";
 import { useAuth } from "@clerk/nextjs";
+import { redirect } from 'next/navigation';
 
 interface Model {
     id: string;
@@ -22,6 +23,10 @@ export default function Upload() {
 
     const { user } = useUser();
     const { getToken } = useAuth();
+
+    if (!user) {
+        redirect("http://localhost:5173/sign-in");
+    }
 
     const models: Model[] = [
         { id: "model1", name: "Model 1: Precision Validator", description: "...", icon: <BsShieldCheck className="h-8 w-8 text-blue-400" /> },

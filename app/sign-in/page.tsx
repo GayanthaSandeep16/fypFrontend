@@ -1,10 +1,11 @@
-// app/sign-up/[[...signUp]]/page.tsx
+// app/sign-in/page.tsx
 "use client";
 
+import { SignIn } from "@clerk/nextjs";
 import Link from "next/link";
-import { SignUp } from "@clerk/nextjs";
+import { useAuth } from "@clerk/nextjs";
 
-export default function SignUpPage() {
+export default function SignInPage() {
   return (
     <div className="min-h-screen bg-black py-20">
       {/* Background gradients */}
@@ -19,21 +20,21 @@ export default function SignUpPage() {
           h-[500px] w-[500px] rounded-full bg-blue-600/10 blur-[120px]" />
       </div>
 
+      {/* Content */}
       <div className="container mx-auto px-6 max-w-2xl relative z-10">
         <h1 className="text-5xl font-bold text-white text-center mb-8 drop-shadow-lg">
-          Sign Up to PureChain
+          Sign In to PureChain
         </h1>
         <p className="text-xl text-gray-300 text-center mb-12">
           Access your account to contribute to decentralized data quality.
         </p>
+
+        {/* Clerk SignIn Component */}
         <div className="bg-gradient-to-br from-blue-700/20 to-blue-500/20 p-8 rounded-lg shadow-lg flex justify-center">
-          <SignUp
-            path="/sign-up"
-            signInUrl="/sign-in"
-            forceRedirectUrl="/become-member"
-            signInForceRedirectUrl="/become-member"
-          />
+          <SignIn          />
         </div>
+
+        {/* Back to Home */}
         <div className="text-center mt-8">
           <Link href="/" className="text-blue-400 hover:text-blue-300 transition-colors">
             Back to Home
