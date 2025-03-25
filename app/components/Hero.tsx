@@ -30,7 +30,7 @@ export default function Hero() {
                     </svg>
                 </Link>
                 <Link
-                    href="/build"
+                    href="/submit-data"
                     className="px-8 py-3 text-lg font-medium text-white bg-black rounded-md hover:bg-gray-800 transition-colors"
                 >
                     Contribute to PureChain

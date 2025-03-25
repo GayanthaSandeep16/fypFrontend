@@ -11,7 +11,7 @@ interface Model {
     id: string;
     name: string;
     description: string;
-    icon: JSX.Element;
+    icon: React.ReactNode;
 }
 
 export default function Upload() {
@@ -61,7 +61,7 @@ export default function Upload() {
         const formData = new FormData();
         formData.append("files", file);
         formData.append("clerkUserId", user.id);
-        formData.append("walletAddress", user?.unsafeMetadata?.walletAddress || "0x59C6D89CF29B4Be21AB08b62C1db4694A77B6f0f");
+        formData.append("walletAddress", user?.unsafeMetadata?.walletAddress as string);
         formData.append("modelId", selectedModel);
 
         try {
@@ -74,7 +74,7 @@ export default function Upload() {
             });
             setResult({ message: response.data.message, ipfsHash: response.data.ipfsHash });
         } catch (error) {
-            setResult({ message: error.response?.data?.message || error.message });
+            setResult({ message: (error as any).response?.data?.message || (error as any).message });
         } finally {
             setIsLoading(false); // Stop loading
         }

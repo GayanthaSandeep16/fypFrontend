@@ -4,6 +4,9 @@ import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import Link from "next/link";
+import { useUser } from "@clerk/nextjs";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation"; // Import useRouter for redirection
 import {
     Select,
     SelectContent,
@@ -24,12 +27,12 @@ import {
 } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 
-// Define the form schema with Zod
+// Define the form schema with Zod, including email
 const formSchema = z.object({
     fullName: z.string().min(2, "Full name must be at least 2 characters"),
     email: z.string().email("Please enter a valid email address"),
     walletAddress: z.string().min(10, "Wallet address must be at least 10 characters"),
-    sector: z.enum(["healthcare", "finance"], {
+    sector: z.enum(["Healthcare", "Finance"], {
         required_error: "Please select a sector",
     }),
     organization: z.string().min(2, "Organization name must be at least 2 characters"),
@@ -39,6 +42,12 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 export default function BecomeMember() {
+    const { user, isLoaded } = useUser();
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [formInitialized, setFormInitialized] = useState(false);
+    const [successMessage, setSuccessMessage] = useState<string | null>(null);
+    const router = useRouter(); // Initialize useRouter
+
     const form = useForm<FormValues>({
         resolver: zodResolver(formSchema),
         defaultValues: {
@@ -51,25 +60,75 @@ export default function BecomeMember() {
         },
     });
 
-    const onSubmit = (data: FormValues) => {
-        console.log("Form submitted:", data);
-        // Add your submission logic here (e.g., API call)
+    // Pre-fill form with Clerk data
+    useEffect(() => {
+        if (isLoaded && user && !formInitialized) {
+            form.reset({
+                fullName: user.fullName || "",
+                email: user.primaryEmailAddress?.emailAddress || "",
+                walletAddress: "",
+                sector: undefined,
+                organization: "",
+                reason: "",
+            });
+            setFormInitialized(true);
+        }
+    }, [isLoaded, user, form, formInitialized]);
+
+    const onSubmit = async (data: FormValues) => {
+        if (!isLoaded || !user) {
+            form.setError("root", { message: "Please wait for authentication to complete" });
+            return;
+        }
+
+        console.log("User ID from Clerk:", user.id); // Debug: Check if user.id exists
+        setIsSubmitting(true);
+        try {
+            const requestBody = {
+                name: data.fullName,
+                email: data.email,
+                organization: data.organization,
+                sector: data.sector,
+                reason: data.reason,
+                role: "User",
+                clerkUserId: user.id,
+                walletAddress: data.walletAddress,
+            };
+            console.log("Request body:", requestBody); // Debug: Log the body before sending
+
+            const response = await fetch('http://localhost:3000/api/create-user', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(requestBody),
+            });
+
+            const result = await response.json();
+            console.log("Response from server:", result); // Debug: Log server response
+
+            if (!response.ok) {
+                throw new Error(result.error || "Failed to create user");
+            }
+
+            console.log("User created successfully:", result);
+            setSuccessMessage(result.message); // Set success message
+            form.reset();
+            router.push('/'); // Redirect to home page
+        } catch (error) {
+            console.error("Submission error:", error);
+            form.setError("root", { message: error instanceof Error ? error.message : "An unknown error occurred" });
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (
         <div className="min-h-screen bg-black py-20">
             <div className="pointer-events-none fixed inset-0 overflow-hidden">
-                <div className="absolute right-[-225px] top-0 h-[700px] w-[700px] rounded-full
-                    bg-gradient-to-br from-blue-500/20 via-blue-600/30 to-transparent
-                    blur-[100px]" />
-                <div className="absolute bottom-[-350px] left-[-225px] h-[1000px] w-[1000px] rounded-full
-                    bg-gradient-to-tl from-purple-500/20 via-blue-700/30 to-transparent
-                    blur-[100px]" />
-                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2
-                    h-[500px] w-[500px] rounded-full bg-blue-600/10 blur-[120px]" />
+                {/* ... background styling ... */}
             </div>
             <div className="container mx-auto px-6 max-w-2xl relative z-10">
-                {/* Header */}
                 <h1 className="text-5xl font-bold text-white text-center mb-8 drop-shadow-lg">
                     Join the PureChain Community
                 </h1>
@@ -77,7 +136,8 @@ export default function BecomeMember() {
                     Sign up to contribute to decentralized data quality and power the future of AI.
                 </p>
 
-                {/* Form */}
+                {!isLoaded && <p className="text-white text-center">Loading authentication...</p>}
+
                 <FormProvider {...form}>
                     <form
                         onSubmit={form.handleSubmit(onSubmit)}
@@ -97,9 +157,7 @@ export default function BecomeMember() {
                                             {...field}
                                         />
                                     </FormControl>
-                                    <FormDescription className="text-gray-300">
-                                        This will be your display name in the PureChain ecosystem.
-                                    </FormDescription>
+                                
                                     <FormMessage className="text-red-400" />
                                 </FormItem>
                             )}
@@ -120,9 +178,6 @@ export default function BecomeMember() {
                                             {...field}
                                         />
                                     </FormControl>
-                                    <FormDescription className="text-gray-300">
-                                        We’ll use this to contact you about your account.
-                                    </FormDescription>
                                     <FormMessage className="text-red-400" />
                                 </FormItem>
                             )}
@@ -142,9 +197,7 @@ export default function BecomeMember() {
                                             {...field}
                                         />
                                     </FormControl>
-                                    <FormDescription className="text-gray-300">
-                                        Your blockchain wallet address for secure interactions.
-                                    </FormDescription>
+                             
                                     <FormMessage className="text-red-400" />
                                 </FormItem>
                             )}
@@ -165,15 +218,12 @@ export default function BecomeMember() {
                                             <SelectContent className="bg-black/90 text-white border-blue-500/20">
                                                 <SelectGroup>
                                                     <SelectLabel>Sectors</SelectLabel>
-                                                    <SelectItem value="healthcare">Healthcare</SelectItem>
-                                                    <SelectItem value="finance">Finance</SelectItem>
+                                                    <SelectItem value="Healthcare">Healthcare</SelectItem>
+                                                    <SelectItem value="Finance">Finance</SelectItem>
                                                 </SelectGroup>
                                             </SelectContent>
                                         </Select>
                                     </FormControl>
-                                    <FormDescription className="text-gray-300">
-                                        Choose the industry you’re working in.
-                                    </FormDescription>
                                     <FormMessage className="text-red-400" />
                                 </FormItem>
                             )}
@@ -193,9 +243,6 @@ export default function BecomeMember() {
                                             {...field}
                                         />
                                     </FormControl>
-                                    <FormDescription className="text-gray-300">
-                                        Tell us where you’re affiliated.
-                                    </FormDescription>
                                     <FormMessage className="text-red-400" />
                                 </FormItem>
                             )}
@@ -226,14 +273,18 @@ export default function BecomeMember() {
                         {/* Submit Button */}
                         <Button
                             type="submit"
-                            className="w-full py-4 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-600/90 transition-colors"
+                            disabled={isSubmitting}
+                            className="w-full py-4 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-600/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            Sign Up
+                            {isSubmitting ? "Submitting..." : "Sign Up"}
                         </Button>
                     </form>
                 </FormProvider>
 
-                {/* Back to Home */}
+                {successMessage && (
+                    <p className="text-white text-center mt-4">{successMessage}</p>
+                )}
+
                 <div className="text-center mt-8">
                     <Link href="/" className="text-blue-400 hover:text-blue-300 transition-colors">
                         Back to Home
