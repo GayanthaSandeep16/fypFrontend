@@ -17,9 +17,11 @@ export default function Upload() {
     const [selectedModel, setSelectedModel] = useState<string | null>(null);
     const [file, setFile] = useState<File | null>(null);
     const [message, setMessage] = useState<string>("");
+    const [isLoading, setIsLoading] = useState<boolean>(false); // Added loading state
+    const [result, setResult] = useState<{ message: string; ipfsHash?: string } | null>(null); // Added result state
 
-    const { user } = useUser(); // Get the authenticated user
-    const { getToken } = useAuth(); // Get the token generator
+    const { user } = useUser();
+    const { getToken } = useAuth();
 
     const models: Model[] = [
         { id: "model1", name: "Model 1: Precision Validator", description: "...", icon: <BsShieldCheck className="h-8 w-8 text-blue-400" /> },
@@ -48,27 +50,33 @@ export default function Upload() {
             return;
         }
 
+        setIsLoading(true); // Start loading
+        setMessage(""); // Clear previous message
+        setResult(null); // Clear previous result
+
         const formData = new FormData();
         formData.append("files", file);
-        formData.append("clerkUserId", user.id); // Clerk user ID
-        formData.append("walletAddress", user?.unsafeMetadata?.walletAddress || "0x..."); // Replace with actual wallet address from Clerk metadata or another source
+        formData.append("clerkUserId", user.id);
+        formData.append("walletAddress", user?.unsafeMetadata?.walletAddress || "0x1C22aC6e05d1d32De03EfEB20438DBbB8c98b141");
         formData.append("modelId", selectedModel);
 
         try {
-            const token = await getToken(); // Get JWT token from Clerk
+            const token = await getToken();
             const response = await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/submit-data`, formData, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                     "Content-Type": "multipart/form-data",
                 },
             });
-            setMessage(`Success: ${response.data.message} (IPFS Hash: ${response.data.ipfsHash})`);
+            setResult({ message: response.data.message, ipfsHash: response.data.ipfsHash });
         } catch (error) {
-            setMessage(`Error: ${error.response?.data?.message || error.message}`);
+            setResult({ message: error.response?.data?.message || error.message });
+        } finally {
+            setIsLoading(false); // Stop loading
         }
     };
 
-    const isSubmitDisabled = !selectedModel || !file || !user;
+    const isSubmitDisabled = !selectedModel || !file || !user || isLoading;
 
     return (
         <div className="min-h-screen bg-black py-20">
@@ -114,12 +122,31 @@ export default function Upload() {
                         onClick={handleSubmit}
                         disabled={isSubmitDisabled}
                         className={`px-8 py-4 text-lg font-medium text-white rounded-md transition-colors ${
-                            isSubmitDisabled ? "bg-gray-600 cursor-not-allowed" : "bg-blue-600"
+                            isSubmitDisabled ? "bg-gray-600 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
                         }`}
                     >
-                        Process Your Data
+                        {isLoading ? "Processing..." : "Process Your Data"}
                     </button>
                     {message && <p className="text-sm text-gray-400 mt-2">{message}</p>}
+                </div>
+                
+                {/* Loading and Results Panel */}
+                <div className="max-w-3xl mx-auto mt-8">
+                    {isLoading && (
+                        <div className="bg-gradient-to-br from-blue-700/20 to-blue-500/20 p-6 rounded-lg shadow-lg text-center">
+                            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto mb-4"></div>
+                            <p className="text-gray-200">Processing your data, please wait...</p>
+                        </div>
+                    )}
+                    {result && !isLoading && (
+                        <div className="bg-gradient-to-br from-blue-700/20 to-blue-500/20 p-6 rounded-lg shadow-lg">
+                            <h3 className="text-xl font-semibold text-white mb-4">Results</h3>
+                            <p className="text-gray-200">{result.message}</p>
+                            {result.ipfsHash && (
+                                <p className="text-gray-400 mt-2">IPFS Hash: <span className="text-blue-400">{result.ipfsHash}</span></p>
+                            )}
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
