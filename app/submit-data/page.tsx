@@ -19,7 +19,7 @@ export default function Upload() {
     const [selectedModel, setSelectedModel] = useState<string | null>(null);
     const [file, setFile] = useState<File | null>(null);
     const [message, setMessage] = useState<string>("");
-    const [error, setError] = useState<string>(""); // New state for error messages
+    const [error, setError] = useState<string>(""); 
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [result, setResult] = useState<{ message: string; ipfsHash?: string } | null>(null);
 
@@ -54,7 +54,7 @@ export default function Upload() {
         },
     ];
 
-    const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB in bytes
+    const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 MB in bytes
 
     const validateFile = (file: File): string | null => {
         // Check file type
@@ -63,7 +63,7 @@ export default function Upload() {
         }
         // Check file size
         if (file.size > MAX_FILE_SIZE) {
-            return "File size exceeds 10 MB. Please upload a smaller file.";
+            return "File size exceeds 50 MB. Please upload a smaller file.";
         }
         return null; // No errors
     };
@@ -83,7 +83,7 @@ export default function Upload() {
                 setFile(droppedFile);
             }
         }
-    };
+      };
 
     const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
         const selectedFile = e.target.files?.[0];
@@ -108,14 +108,14 @@ export default function Upload() {
         setIsLoading(true);
         setMessage("");
         setResult(null);
-        setError(""); // Clear any previous errors
+        setError(""); 
 
         const formData = new FormData();
         formData.append("files", file);
         formData.append("clerkUserId", user.id);
         formData.append("walletAddress", user?.unsafeMetadata?.walletAddress as string);
         formData.append("modelId", selectedModel);
-
+        
         try {
             const token = await getToken();
             const response = await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/submit-data`, formData, {
@@ -125,11 +125,27 @@ export default function Upload() {
                 },
             });
             setResult({ message: response.data.message, ipfsHash: response.data.ipfsHash });
-        } catch (error) {
-            setResult({ message: (error as any).response?.data?.message || (error as any).message });
-        } finally {
-            setIsLoading(false);
+         } catch (error: any) {
+        // Improved error handling
+        if (error.response) {
+            // The request was made and the server responded with a status code
+            if (error.response.data.error) {
+                setError(error.response.data.error);
+            } else if (error.response.data.message) {
+                setError(error.response.data.message);
+            } else {
+                setError("An error occurred while processing your request.");
+            }
+        } else if (error.request) {
+            // The request was made but no response was received
+            setError("No response from server. Please try again later.");
+        } else {
+            // Something happened in setting up the request
+            setError(error.message || "An unexpected error occurred.");
         }
+    } finally {
+        setIsLoading(false);
+    }
     };
 
     const isSubmitDisabled = !selectedModel || !file || !user || isLoading;
