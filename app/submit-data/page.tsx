@@ -153,7 +153,7 @@ export default function Upload() {
                                         : "hover:scale-105 hover:shadow-2xl"
                                 }`}
                             >
-                                <div className="flex flex-col items-center">
+                                <div className="flex flex-col items-center justify-center h-full">
                                     <div className="mb-4">{model.icon}</div>
                                     <h3 className="text-xl font-semibold text-white mb-2">{model.name}</h3>
                                 </div>
