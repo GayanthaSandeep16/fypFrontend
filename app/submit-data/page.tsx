@@ -11,6 +11,7 @@ interface Model {
     id: string;
     name: string;
     description: string;
+    note: string;
     icon: React.ReactNode;
 }
 
@@ -18,8 +19,8 @@ export default function Upload() {
     const [selectedModel, setSelectedModel] = useState<string | null>(null);
     const [file, setFile] = useState<File | null>(null);
     const [message, setMessage] = useState<string>("");
-    const [isLoading, setIsLoading] = useState<boolean>(false); // Added loading state
-    const [result, setResult] = useState<{ message: string; ipfsHash?: string } | null>(null); // Added result state
+    const [isLoading, setIsLoading] = useState<boolean>(false);
+    const [result, setResult] = useState<{ message: string; ipfsHash?: string } | null>(null);
 
     const { user } = useUser();
     const { getToken } = useAuth();
@@ -29,9 +30,27 @@ export default function Upload() {
     }
 
     const models: Model[] = [
-        { id: "model1", name: "Model 1: Precision Validator", description: "...", icon: <BsShieldCheck className="h-8 w-8 text-blue-400" /> },
-        { id: "model2", name: "Model 2: Smart Enforcer", description: "...", icon: <BsCodeSquare className="h-8 w-8 text-blue-400" /> },
-        { id: "model3", name: "Model 3: Data Scaler", description: "...", icon: <BsDatabase className="h-8 w-8 text-blue-400" /> },
+        {
+            id: "random-forest",
+            name: "Random Forest Model",
+            description: "A powerful ensemble learning model that uses multiple decision trees to make predictions. It’s great for classification and regression tasks, handling complex datasets with high accuracy.",
+            note: "Best for labeled datasets with features and target variables (e.g., predicting a category or numerical value). Ensure your CSV has a target column for supervised learning.",
+            icon: <BsShieldCheck className="h-8 w-8 text-blue-400" />,
+        },
+        {
+            id: "k-means",
+            name: "K-Means Clustering Model",
+            description: "An unsupervised learning model that groups data into clusters based on similarity. It’s useful for discovering patterns or segments in your data without predefined labels.",
+            note: "Ideal for unlabeled datasets where you want to find natural groupings (e.g., customer segmentation). Your CSV should contain numerical features without a target column.",
+            icon: <BsCodeSquare className="h-8 w-8 text-blue-400" />,
+        },
+        {
+            id: "logistic-regression",
+            name: "Logistic Regression Model",
+            description: "A simple yet effective model for binary classification tasks. It predicts the probability of an event occurring (e.g., yes/no, true/false) based on input features.",
+            note: "Suitable for labeled datasets with binary outcomes (e.g., 0/1, yes/no). Ensure your CSV has a binary target column and relevant features.",
+            icon: <BsDatabase className="h-8 w-8 text-blue-400" />,
+        },
     ];
 
     const handleModelSelect = (modelId: string) => setSelectedModel(modelId);
@@ -54,9 +73,9 @@ export default function Upload() {
             return;
         }
 
-        setIsLoading(true); // Start loading
-        setMessage(""); // Clear previous message
-        setResult(null); // Clear previous result
+        setIsLoading(true);
+        setMessage("");
+        setResult(null);
 
         const formData = new FormData();
         formData.append("files", file);
@@ -76,7 +95,7 @@ export default function Upload() {
         } catch (error) {
             setResult({ message: (error as any).response?.data?.message || (error as any).message });
         } finally {
-            setIsLoading(false); // Stop loading
+            setIsLoading(false);
         }
     };
 
@@ -89,19 +108,29 @@ export default function Upload() {
                     Unleash Your <span className="text-blue-500">Data’s Potential</span>
                 </h1>
                 <section className="mb-20">
-                    <h2 className="text-3xl font-semibold text-white text-center mb-8">Choose Your Validation Model</h2>
+                    <h2 className="text-3xl font-semibold text-white text-center mb-8">Choose Your Preferred Model</h2>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                         {models.map((model) => (
                             <div
                                 key={model.id}
                                 onClick={() => handleModelSelect(model.id)}
-                                className={`bg-gradient-to-br from-blue-700/20 to-blue-500/20 p-6 rounded-lg shadow-lg cursor-pointer ${
-                                    selectedModel === model.id ? "border-2 border-blue-600" : "hover:shadow-xl"
+                                className={`relative bg-gradient-to-br from-blue-700/20 to-blue-500/20 p-6 rounded-lg shadow-lg cursor-pointer group transition-all duration-300 ${
+                                    selectedModel === model.id
+                                        ? "border-2 border-blue-600 scale-105"
+                                        : "hover:scale-105 hover:shadow-2xl"
                                 }`}
                             >
-                                <div className="mb-4">{model.icon}</div>
-                                <h3 className="text-xl font-semibold text-white mb-2">{model.name}</h3>
-                                <p className="text-gray-200">{model.description}</p>
+                                {/* Default Card Content (Icon and Name) */}
+                                <div className="flex flex-col items-center">
+                                    <div className="mb-4">{model.icon}</div>
+                                    <h3 className="text-xl font-semibold text-white mb-2">{model.name}</h3>
+                                </div>
+
+                                {/* Hover Overlay with Description and Note */}
+                                <div className="absolute inset-0 bg-gradient-to-br from-blue-800/90 to-blue-600/90 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-center p-4">
+                                    <p className="text-gray-100 text-sm mb-2">{model.description}</p>
+                                    <p className="text-gray-300 text-xs italic">Note: {model.note}</p>
+                                </div>
                             </div>
                         ))}
                     </div>
@@ -133,7 +162,7 @@ export default function Upload() {
                     </button>
                     {message && <p className="text-sm text-gray-400 mt-2">{message}</p>}
                 </div>
-                
+
                 {/* Loading and Results Panel */}
                 <div className="max-w-3xl mx-auto mt-8">
                     {isLoading && (

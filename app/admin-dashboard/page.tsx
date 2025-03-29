@@ -61,9 +61,9 @@ export default function AdminDashboard() {
     process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3000";
 
   const models = [
-    { id: "model1", name: "Model 1: Precision Validator" },
-    { id: "model2", name: "Model 2: Smart Enforcer" },
-    { id: "model3", name: "Model 3: Data Scaler" },
+    { id: "model1", name: "Random Forest Model" },
+    { id: "model2", name: "K-Means Clustering Model" },
+    { id: "model3", name: "Logistic Regression Model" },
   ];
 
   // Fetch valid users filtered by modelId
