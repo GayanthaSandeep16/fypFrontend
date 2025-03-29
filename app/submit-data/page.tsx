@@ -147,7 +147,7 @@ export default function Upload() {
                             <div
                                 key={model.id}
                                 onClick={() => handleModelSelect(model.id)}
-                                className={`relative bg-gradient-to-br from-blue-700/20 to-blue-500/20 p-6 rounded-lg shadow-lg cursor-pointer group transition-all duration-300 ${
+                                className={`relative min-h-[210px] bg-gradient-to-br from-blue-700/20 to-blue-500/20 p-6 rounded-lg shadow-lg cursor-pointer group transition-all duration-300 ${
                                     selectedModel === model.id
                                         ? "border-2 border-blue-600 scale-105"
                                         : "hover:scale-105 hover:shadow-2xl"
@@ -157,7 +157,8 @@ export default function Upload() {
                                     <div className="mb-4">{model.icon}</div>
                                     <h3 className="text-xl font-semibold text-white mb-2">{model.name}</h3>
                                 </div>
-                                <div className="absolute inset-0 bg-gradient-to-br from-blue-800/90 to-blue-600/90 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-center p-4">
+                                <div className="absolute inset-0 bg-gradient-to-br from-blue-800 to-blue-600 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-center p-4">
+                                <div className="mb-4">{model.icon}</div>
                                     <p className="text-gray-100 text-sm mb-2">{model.description}</p>
                                     <p className="text-gray-300 text-xs italic">Note: {model.note}</p>
                                 </div>
