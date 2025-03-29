@@ -19,6 +19,7 @@ export default function Upload() {
     const [selectedModel, setSelectedModel] = useState<string | null>(null);
     const [file, setFile] = useState<File | null>(null);
     const [message, setMessage] = useState<string>("");
+    const [error, setError] = useState<string>(""); // New state for error messages
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [result, setResult] = useState<{ message: string; ipfsHash?: string } | null>(null);
 
@@ -53,18 +54,49 @@ export default function Upload() {
         },
     ];
 
+    const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB in bytes
+
+    const validateFile = (file: File): string | null => {
+        // Check file type
+        if (file.type !== "text/csv") {
+            return "Please upload a valid CSV file.";
+        }
+        // Check file size
+        if (file.size > MAX_FILE_SIZE) {
+            return "File size exceeds 10 MB. Please upload a smaller file.";
+        }
+        return null; // No errors
+    };
+
     const handleModelSelect = (modelId: string) => setSelectedModel(modelId);
+
     const handleFileDrop = (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
         const droppedFile = e.dataTransfer.files[0];
-        if (droppedFile && droppedFile.type === "text/csv") setFile(droppedFile);
-        else alert("Please upload a valid CSV file.");
+        if (droppedFile) {
+            const errorMessage = validateFile(droppedFile);
+            if (errorMessage) {
+                setError(errorMessage);
+                setFile(null); // Clear the file if invalid
+            } else {
+                setError(""); // Clear any previous errors
+                setFile(droppedFile);
+            }
+        }
     };
 
     const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
         const selectedFile = e.target.files?.[0];
-        if (selectedFile && selectedFile.type === "text/csv") setFile(selectedFile);
-        else alert("Please upload a valid CSV file.");
+        if (selectedFile) {
+            const errorMessage = validateFile(selectedFile);
+            if (errorMessage) {
+                setError(errorMessage);
+                setFile(null); // Clear the file if invalid
+            } else {
+                setError(""); // Clear any previous errors
+                setFile(selectedFile);
+            }
+        }
     };
 
     const handleSubmit = async () => {
@@ -76,6 +108,7 @@ export default function Upload() {
         setIsLoading(true);
         setMessage("");
         setResult(null);
+        setError(""); // Clear any previous errors
 
         const formData = new FormData();
         formData.append("files", file);
@@ -120,13 +153,10 @@ export default function Upload() {
                                         : "hover:scale-105 hover:shadow-2xl"
                                 }`}
                             >
-                                {/* Default Card Content (Icon and Name) */}
                                 <div className="flex flex-col items-center">
                                     <div className="mb-4">{model.icon}</div>
                                     <h3 className="text-xl font-semibold text-white mb-2">{model.name}</h3>
                                 </div>
-
-                                {/* Hover Overlay with Description and Note */}
                                 <div className="absolute inset-0 bg-gradient-to-br from-blue-800/90 to-blue-600/90 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-center p-4">
                                     <p className="text-gray-100 text-sm mb-2">{model.description}</p>
                                     <p className="text-gray-300 text-xs italic">Note: {model.note}</p>
@@ -148,6 +178,12 @@ export default function Upload() {
                         <label htmlFor="file-upload" className="inline-block px-6 py-2 bg-blue-600 text-white rounded-md cursor-pointer transition-colors">
                             Select File
                         </label>
+                        {/* Display error message below the upload area */}
+                        {error && (
+                            <div className="mt-4 p-3 bg-red-900/20 border border-red-500/30 rounded-md">
+                                <p className="text-red-400 text-sm">{error}</p>
+                            </div>
+                        )}
                     </div>
                 </section>
                 <div className="text-center mt-12">
