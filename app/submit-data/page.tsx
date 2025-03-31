@@ -32,21 +32,21 @@ export default function Upload() {
 
     const models: Model[] = [
         {
-            id: "random-forest",
+            id: "model1",
             name: "Random Forest Model",
             description: "A powerful ensemble learning model that uses multiple decision trees to make predictions. It’s great for classification and regression tasks, handling complex datasets with high accuracy.",
             note: "Best for labeled datasets with features and target variables (e.g., predicting a category or numerical value). Ensure your CSV has a target column for supervised learning.",
             icon: <BsShieldCheck className="h-8 w-8 text-blue-400" />,
         },
         {
-            id: "k-means",
+            id: "model2",
             name: "K-Means Clustering Model",
             description: "An unsupervised learning model that groups data into clusters based on similarity. It’s useful for discovering patterns or segments in your data without predefined labels.",
             note: "Ideal for unlabeled datasets where you want to find natural groupings (e.g., customer segmentation). Your CSV should contain numerical features without a target column.",
             icon: <BsCodeSquare className="h-8 w-8 text-blue-400" />,
         },
         {
-            id: "logistic-regression",
+            id: "model3", // not implemented yet
             name: "Logistic Regression Model",
             description: "A simple yet effective model for binary classification tasks. It predicts the probability of an event occurring (e.g., yes/no, true/false) based on input features.",
             note: "Suitable for labeled datasets with binary outcomes (e.g., 0/1, yes/no). Ensure your CSV has a binary target column and relevant features.",

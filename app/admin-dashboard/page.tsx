@@ -112,12 +112,22 @@ export default function AdminDashboard() {
   // Fetch notifications
   const fetchNotifications = async (tokenFetcher: () => Promise<string | null>) => {
     setLoading((prev) => ({ ...prev, notifications: true }));
+    setError(null);  // Reset error state
     try {
       const token = await tokenFetcher();
       const response = await fetch(`${API_BASE_URL}/notifications`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!response.ok) throw new Error("Failed to fetch notifications");
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        if (response.status === 404) {
+          setNotifications([]);   
+          return;
+        }
+        throw new Error(errorData.error || "Failed to fetch notifications");
+      }
+      
       const data: Notification[] = await response.json();
       setNotifications(data);
     } catch (err) {
