@@ -241,7 +241,7 @@ export default function AdminDashboard() {
                   ))}
                 </div>
                 {trainResult && (
-                  <p className="mt-4 text-gray-200">Result: {trainResult.message} (Status: {trainResult.status})</p>
+                  <p className="mt-4 text-gray-200">Result: {trainResult.message} </p>
                 )}
                 {error && !loading.train && (
                   <p className="mt-4 text-red-400">Error: {error}</p>

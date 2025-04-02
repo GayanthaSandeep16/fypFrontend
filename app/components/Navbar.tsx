@@ -7,8 +7,8 @@ export default function Navbar() {
   const { user } = useUser();
   const userRole = user?.publicMetadata?.role as string | undefined;
   
-  // Log the raw userRole
-  console.log("Raw userRole:", userRole);
+
+ 
 
   const links = [
     { label: "Transactions", href: "/transactions" },
@@ -37,13 +37,6 @@ export default function Navbar() {
                   const normalizedUserRole = userRole?.toLowerCase();
                   const normalizedRequiredRole = link.requiredRole.toLowerCase();
 
-                  // Log the comparison for debugging
-                  console.log(
-                    `Comparing roles for ${link.label}:`,
-                    `userRole=${normalizedUserRole}, requiredRole=${normalizedRequiredRole}, match=${
-                      normalizedUserRole === normalizedRequiredRole
-                    }`
-                  );
 
                   if (normalizedUserRole !== normalizedRequiredRole) {
                     return null;
