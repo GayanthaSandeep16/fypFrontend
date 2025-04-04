@@ -1,31 +1,52 @@
 import { create } from "zustand";
 
-interface Transaction {
-  message: string;
-  transactionHash: string;
-  from: string;
+interface TransactionEvent {
+  name: string;
+  args: any;
+  type: string;
+  submissionId?: string;
+}
+
+interface GroupedTransaction {
+  txHash: string;
+  blockNumber: string;
   status: string;
-  events: {
-    name: string;
-    args: {
-      user: string;
-      uniqueId: string;
-      ipfsHash?: string;
-      reputationGain?: string;
-    };
-  }[];
-  gasUsed: string;
+  created_at: number;
+  walletAddress: string;
+  events: TransactionEvent[];
 }
 
-interface TransactionState {
-  transactions: Transaction[];
-  setTransactions: (transactions: Transaction[]) => void;
-  getTransactionByHash: (txHash: string) => Transaction | undefined;
+interface TransactionStore {
+  groupedTransactions: GroupedTransaction[];
+  setTransactions: (transactions: any[]) => void;
+  getTransactionByHash: (txHash: string) => GroupedTransaction | undefined;
 }
 
-export const useTransactionStore = create<TransactionState>((set, get) => ({
-  transactions: [],
-  setTransactions: (transactions) => set({ transactions }),
+export const useTransactionStore = create<TransactionStore>((set, get) => ({
+  groupedTransactions: [],
+  setTransactions: (transactions) => {
+    const transactionMap = new Map<string, GroupedTransaction>();
+    transactions.forEach((tx) => {
+      if (!transactionMap.has(tx.txHash)) {
+        transactionMap.set(tx.txHash, {
+          txHash: tx.txHash,
+          blockNumber: tx.blockNumber,
+          status: tx.status,
+          created_at: tx.created_at,
+          walletAddress: tx.walletAddress,
+          events: [],
+        });
+      }
+      transactionMap.get(tx.txHash).events.push({
+        name: tx.eventName,
+        args: tx.eventArgs,
+        type: tx.type,
+        submissionId: tx.submissionId,
+      });
+    });
+    const grouped = Array.from(transactionMap.values());
+    set({ groupedTransactions: grouped });
+  },
   getTransactionByHash: (txHash) =>
-    get().transactions.find((tx) => tx.transactionHash === txHash),
+    get().groupedTransactions.find((t) => t.txHash === txHash),
 }));

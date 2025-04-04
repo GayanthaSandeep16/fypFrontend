@@ -13,6 +13,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BsGear, BsPeople } from "react-icons/bs";
 import { useUser } from "@clerk/nextjs";
 import { useAuth } from "@clerk/nextjs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface TrainResult {
   message: string;
@@ -21,15 +28,20 @@ interface TrainResult {
 
 interface User {
   _id: string;
+  _creationTime: number;
   created_at: number;
+  dataHash: string;
   datasetName: string;
-  sector: "healthcare" | "finance";
+  sector: string; // Updated to string to handle case variations
   user: {
     email: string;
     name: string;
   };
   validationStatus: "VALID" | "INVALID";
   modelId: string;
+  userId: string;
+  transactionHash: string;
+  walletAddress: string;
 }
 
 interface Notification {
@@ -47,6 +59,9 @@ export default function AdminDashboard() {
   const [invalidUsers, setInvalidUsers] = useState<User[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [selectedModel, setSelectedModel] = useState<string | null>(null);
+  const [selectedSector, setSelectedSector] = useState<"healthcare" | "finance">(
+    "healthcare"
+  );
   const [loading, setLoading] = useState({
     train: false,
     users: false,
@@ -67,19 +82,22 @@ export default function AdminDashboard() {
   ];
 
   // Fetch valid users filtered by modelId
-  const fetchValidUsers = async (tokenFetcher: () => Promise<string | null>, modelId?: string) => {
+  const fetchValidUsers = async (
+    tokenFetcher: () => Promise<string | null>,
+    modelId?: string
+  ) => {
     setLoading((prev) => ({ ...prev, users: true }));
     try {
       const token = await tokenFetcher();
-      const url = modelId 
-        ? `${API_BASE_URL}/valid-submissions?modelId=${modelId}` 
+      const url = modelId
+        ? `${API_BASE_URL}/valid-submissions?modelId=${modelId}`
         : `${API_BASE_URL}/valid-submissions`;
       const response = await fetch(url, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      console.log("Sending request with body:", JSON.stringify({ modelId }));
       if (!response.ok) throw new Error("Failed to fetch valid users");
       const data = await response.json();
+      console.log("Fetched valid users:", data); // Debug log
       setValidUsers(Array.isArray(data) ? data : []);
     } catch (err) {
       setError((err as Error).message);
@@ -89,12 +107,15 @@ export default function AdminDashboard() {
   };
 
   // Fetch invalid users filtered by modelId
-  const fetchInvalidUsers = async (tokenFetcher: () => Promise<string | null>, modelId?: string) => {
+  const fetchInvalidUsers = async (
+    tokenFetcher: () => Promise<string | null>,
+    modelId?: string
+  ) => {
     setLoading((prev) => ({ ...prev, users: true }));
     try {
       const token = await tokenFetcher();
-      const url = modelId 
-        ? `${API_BASE_URL}/invalid-submissions?modelId=${modelId}` 
+      const url = modelId
+        ? `${API_BASE_URL}/invalid-submissions?modelId=${modelId}`
         : `${API_BASE_URL}/invalid-submissions`;
       const response = await fetch(url, {
         headers: { Authorization: `Bearer ${token}` },
@@ -112,22 +133,22 @@ export default function AdminDashboard() {
   // Fetch notifications
   const fetchNotifications = async (tokenFetcher: () => Promise<string | null>) => {
     setLoading((prev) => ({ ...prev, notifications: true }));
-    setError(null);  // Reset error state
+    setError(null);
     try {
       const token = await tokenFetcher();
       const response = await fetch(`${API_BASE_URL}/notifications`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         if (response.status === 404) {
-          setNotifications([]);   
+          setNotifications([]);
           return;
         }
         throw new Error(errorData.error || "Failed to fetch notifications");
       }
-      
+
       const data: Notification[] = await response.json();
       setNotifications(data);
     } catch (err) {
@@ -137,8 +158,11 @@ export default function AdminDashboard() {
     }
   };
 
-  // Train model with selectedModel
-  const handleTrainModel = async (tokenFetcher: () => Promise<string | null>, modelId: string) => {
+  // Train model with selectedModel and selectedSector
+  const handleTrainModel = async (
+    tokenFetcher: () => Promise<string | null>,
+    modelId: string
+  ) => {
     setLoading((prev) => ({ ...prev, train: true }));
     setTrainResult(null);
     setError(null);
@@ -149,13 +173,17 @@ export default function AdminDashboard() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ modelId }),
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ modelId, sector: selectedSector }),
       });
-      console.log("Sending request with body:", JSON.stringify({ modelId }));
+      console.log(
+        "Sending request with body:",
+        JSON.stringify({ modelId, sector: selectedSector })
+      );
 
       if (!response.ok) {
-        const errorData = await response.json(); 
+        const errorData = await response.json();
         throw new Error(`Failed to train model: ${errorData.error}`);
       }
       const data: TrainResult = await response.json();
@@ -178,9 +206,13 @@ export default function AdminDashboard() {
     fetchNotifications(getToken);
   }, [getToken, selectedModel]);
 
-  // Check if there are valid submissions for a specific model
+  // Check if there are valid submissions for a specific model and sector
   const hasValidSubmissions = (modelId: string) => {
-    return validUsers.some((user) => user.modelId === modelId);
+    return validUsers.some(
+      (user) =>
+        user.modelId === modelId &&
+        user.sector.toLowerCase() === selectedSector // Normalize case
+    );
   };
 
   return (
@@ -197,20 +229,50 @@ export default function AdminDashboard() {
 
         <Tabs defaultValue="train" className="max-w-4xl mx-auto">
           <TabsList className="grid w-full grid-cols-5 bg-gradient-to-br from-blue-700/20 to-blue-500/20">
-            <TabsTrigger value="train" className="text-white data-[state=active]:bg-blue-600/50">Train Model</TabsTrigger>
-            <TabsTrigger value="users" className="text-white data-[state=active]:bg-blue-600/50">Users</TabsTrigger>
-            <TabsTrigger value="notifications" className="text-white data-[state=active]:bg-blue-600/50">Notifications</TabsTrigger>
-            <TabsTrigger value="admin" className="text-white data-[state=active]:bg-blue-600/50">Admin</TabsTrigger>
-            <TabsTrigger value="models" className="text-white data-[state=active]:bg-blue-600/50">Models</TabsTrigger>
+            <TabsTrigger value="train" className="text-white data-[state=active]:bg-blue-600/50">
+              Train Model
+            </TabsTrigger>
+            <TabsTrigger value="users" className="text-white data-[state=active]:bg-blue-600/50">
+              Users
+            </TabsTrigger>
+            <TabsTrigger value="notifications" className="text-white data-[state=active]:bg-blue-600/50">
+              Notifications
+            </TabsTrigger>
+            <TabsTrigger value="admin" className="text-white data-[state=active]:bg-blue-600/50">
+              Admin
+            </TabsTrigger>
+            <TabsTrigger value="models" className="text-white data-[state=active]:bg-blue-600/50">
+              Models
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="train">
             <Card className="bg-gradient-to-br from-blue-700/20 to-blue-500/20 border-blue-500/20">
               <CardHeader>
                 <CardTitle className="text-white">Train Model</CardTitle>
-                <CardDescription className="text-gray-300">Select a model to train and view the results.</CardDescription>
+                <CardDescription className="text-gray-300">
+                  Select a sector and model to train and view the results.
+                </CardDescription>
               </CardHeader>
               <CardContent>
+                {/* Sector Selection using Select */}
+                <div className="mb-6 flex justify-center">
+                  <Select
+                    onValueChange={(value: "healthcare" | "finance") =>
+                      setSelectedSector(value)
+                    }
+                    defaultValue="healthcare"
+                  >
+                    <SelectTrigger className="w-[180px] bg-blue-700/20 text-white border-blue-500/30">
+                      <SelectValue placeholder="Select Sector" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-blue-700/50 text-white border-blue-500/30">
+                      <SelectItem value="healthcare">Healthcare</SelectItem>
+                      <SelectItem value="finance">Finance</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                   {models.map((model) => (
                     <div
@@ -225,23 +287,24 @@ export default function AdminDashboard() {
                       <h3 className="text-lg font-semibold text-white">{model.name}</h3>
                       <Button
                         onClick={() => handleTrainModel(getToken, model.id)}
-                        disabled={
-                          loading.train || 
-                          !hasValidSubmissions(model.id)
-                        }
+                        disabled={loading.train || !hasValidSubmissions(model.id)}
                         className="mt-2 w-full bg-blue-600 text-white hover:bg-blue-700"
                       >
                         <BsGear className="h-5 w-5 mr-2" />
-                        {loading.train && selectedModel === model.id ? "Training..." : "Train"}
+                        {loading.train && selectedModel === model.id
+                          ? "Training..."
+                          : "Train"}
                       </Button>
                       {!hasValidSubmissions(model.id) && (
-                        <p className="text-red-400 text-sm mt-2">No valid submissions available</p>
+                        <p className="text-red-400 text-sm mt-2">
+                          No valid submissions available
+                        </p>
                       )}
                     </div>
                   ))}
                 </div>
                 {trainResult && (
-                  <p className="mt-4 text-gray-200">Result: {trainResult.message} </p>
+                  <p className="mt-4 text-gray-200">Result: {trainResult.message}</p>
                 )}
                 {error && !loading.train && (
                   <p className="mt-4 text-red-400">Error: {error}</p>
@@ -250,17 +313,21 @@ export default function AdminDashboard() {
             </Card>
           </TabsContent>
 
-          {/* Rest of the TabsContent remains the same */}
           <TabsContent value="users">
             <Card className="bg-gradient-to-br from-blue-700/20 to-blue-500/20 border-blue-500/20">
               <CardHeader>
                 <CardTitle className="text-white">User Management</CardTitle>
-                <CardDescription className="text-gray-300">View valid and invalid user submissions.</CardDescription>
+                <CardDescription className="text-gray-300">
+                  View valid and invalid user submissions.
+                </CardDescription>
               </CardHeader>
               <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div>
                   <h3 className="text-xl font-medium text-white mb-4">
-                    Valid Users {selectedModel ? `for ${models.find(m => m.id === selectedModel)?.name}` : ""}
+                    Valid Users{" "}
+                    {selectedModel
+                      ? `for ${models.find((m) => m.id === selectedModel)?.name}`
+                      : ""}
                   </h3>
                   {loading.users ? (
                     <p className="text-gray-300">Loading...</p>
@@ -268,33 +335,71 @@ export default function AdminDashboard() {
                     <ul className="space-y-4 max-h-64 overflow-y-auto">
                       {validUsers.map((user) => (
                         <li key={user._id} className="text-gray-200">
-                          <div><strong>Name:</strong> {user.user.name}</div>
-                          <div><strong>Email:</strong> {user.user.email}</div>
-                          <div><strong>Dataset:</strong> {user.datasetName}</div>
-                          <div><strong>Sector:</strong> {user.sector}</div>
-                          <div><strong>Model:</strong> {models.find(m => m.id === user.modelId)?.name || user.modelId}</div>
-                          <div><strong>Submitted:</strong> {new Date(user.created_at).toLocaleString()}</div>
+                          <div>
+                            <strong>Name:</strong> {user.user.name}
+                          </div>
+                          <div>
+                            <strong>Email:</strong> {user.user.email}
+                          </div>
+                          <div>
+                            <strong>Dataset:</strong> {user.datasetName}
+                          </div>
+                          <div>
+                            <strong>Sector:</strong> {user.sector}
+                          </div>
+                          <div>
+                            <strong>Model:</strong>{" "}
+                            {models.find((m) => m.id === user.modelId)?.name ||
+                              user.modelId}
+                          </div>
+                          <div>
+                            <strong>Submitted:</strong>{" "}
+                            {new Date(user.created_at).toLocaleString()}
+                          </div>
                         </li>
                       ))}
                     </ul>
                   ) : (
-                    <p className="text-gray-300">No valid users found{selectedModel ? ` for ${models.find(m => m.id === selectedModel)?.name}` : ""}.</p>
+                    <p className="text-gray-300">
+                      No valid users found
+                      {selectedModel
+                        ? ` for ${models.find((m) => m.id === selectedModel)?.name}`
+                        : ""}
+                      .
+                    </p>
                   )}
                 </div>
                 <div>
-                  <h3 className="text-xl font-medium text-white mb-4">Invalid Users</h3>
+                  <h3 className="text-xl font-medium text-white mb-4">
+                    Invalid Users
+                  </h3>
                   {loading.users ? (
                     <p className="text-gray-300">Loading...</p>
                   ) : invalidUsers.length > 0 ? (
                     <ul className="space-y-4 max-h-64 overflow-y-auto">
                       {invalidUsers.map((user) => (
                         <li key={user._id} className="text-gray-200">
-                          <div><strong>Name:</strong> {user.user.name}</div>
-                          <div><strong>Email:</strong> {user.user.email}</div>
-                          <div><strong>Dataset:</strong> {user.datasetName}</div>
-                          <div><strong>Sector:</strong> {user.sector}</div>
-                          <div><strong>Model:</strong> {models.find(m => m.id === user.modelId)?.name || user.modelId}</div>
-                          <div><strong>Submitted:</strong> {new Date(user.created_at).toLocaleString()}</div>
+                          <div>
+                            <strong>Name:</strong> {user.user.name}
+                          </div>
+                          <div>
+                            <strong>Email:</strong> {user.user.email}
+                          </div>
+                          <div>
+                            <strong>Dataset:</strong> {user.datasetName}
+                          </div>
+                          <div>
+                            <strong>Sector:</strong> {user.sector}
+                          </div>
+                          <div>
+                            <strong>Model:</strong>{" "}
+                            {models.find((m) => m.id === user.modelId)?.name ||
+                              user.modelId}
+                          </div>
+                          <div>
+                            <strong>Submitted:</strong>{" "}
+                            {new Date(user.created_at).toLocaleString()}
+                          </div>
                         </li>
                       ))}
                     </ul>
@@ -310,7 +415,9 @@ export default function AdminDashboard() {
             <Card className="bg-gradient-to-br from-blue-700/20 to-blue-500/20 border-blue-500/20">
               <CardHeader>
                 <CardTitle className="text-white">Email Notifications</CardTitle>
-                <CardDescription className="text-gray-300">Monitor successful and failed email notifications sent to users.</CardDescription>
+                <CardDescription className="text-gray-300">
+                  Monitor successful and failed email notifications sent to users.
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 {loading.notifications ? (
@@ -320,21 +427,39 @@ export default function AdminDashboard() {
                     {notifications.map((notification) => (
                       <li
                         key={notification._id}
-                        className={`p-4 rounded-md ${notification.status === "success" ? "bg-green-900/20 border border-green-500/30" : "bg-red-900/20 border border-red-500/30"}`}
+                        className={`p-4 rounded-md ${
+                          notification.status === "success"
+                            ? "bg-green-900/20 border border-green-500/30"
+                            : "bg-red-900/20 border border-red-500/30"
+                        }`}
                       >
-                        <div className="text-gray-200"><strong>Email:</strong> {notification.email}</div>
-                        <div className="text-gray-200"><strong>Subject:</strong> {notification.subject}</div>
+                        <div className="text-gray-200">
+                          <strong>Email:</strong> {notification.email}
+                        </div>
+                        <div className="text-gray-200">
+                          <strong>Subject:</strong> {notification.subject}
+                        </div>
                         <div className="text-gray-200">
                           <strong>Status:</strong>{" "}
-                          <span className={notification.status === "success" ? "text-green-400" : "text-red-400"}>
+                          <span
+                            className={
+                              notification.status === "success"
+                                ? "text-green-400"
+                                : "text-red-400"
+                            }
+                          >
                             {notification.status}
                           </span>
                         </div>
                         <div className="text-gray-200">
-                          <strong>User ID:</strong> <span className="text-blue-400">{notification.userId.slice(0, 8)}...</span>
+                          <strong>User ID:</strong>{" "}
+                          <span className="text-blue-400">
+                            {notification.userId.slice(0, 8)}...
+                          </span>
                         </div>
                         <div className="text-gray-400 text-sm">
-                          <strong>Sent:</strong> {new Date(notification.timestamp).toLocaleString()}
+                          <strong>Sent:</strong>{" "}
+                          {new Date(notification.timestamp).toLocaleString()}
                         </div>
                       </li>
                     ))}
@@ -350,14 +475,18 @@ export default function AdminDashboard() {
             <Card className="bg-gradient-to-br from-blue-700/20 to-blue-500/20 border-blue-500/20">
               <CardHeader>
                 <CardTitle className="text-white">Admin Management</CardTitle>
-                <CardDescription className="text-gray-300">Create new admin accounts here.</CardDescription>
+                <CardDescription className="text-gray-300">
+                  Create new admin accounts here.
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <Button className="w-full py-4 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-600/90 transition-colors flex items-center justify-center">
                   <BsPeople className="h-6 w-6 mr-2" />
                   Create New Admin
                 </Button>
-                <p className="text-gray-300 mt-4">(Functionality to be implemented with a future endpoint)</p>
+                <p className="text-gray-300 mt-4">
+                  (Functionality to be implemented with a future endpoint)
+                </p>
               </CardContent>
             </Card>
           </TabsContent>
@@ -366,10 +495,15 @@ export default function AdminDashboard() {
             <Card className="bg-gradient-to-br from-blue-700/20 to-blue-500/20 border-blue-500/20">
               <CardHeader>
                 <CardTitle className="text-white">Model Management</CardTitle>
-                <CardDescription className="text-gray-300">View and manage trained models (to be implemented).</CardDescription>
+                <CardDescription className="text-gray-300">
+                  View and manage trained models (to be implemented).
+                </CardDescription>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-300">Model management functionality will be added in future development.</p>
+                <p className="text-gray-300">
+                  Model management functionality will be added in future
+                  development.
+                </p>
               </CardContent>
             </Card>
           </TabsContent>

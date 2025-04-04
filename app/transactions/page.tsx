@@ -4,35 +4,17 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { useAuth } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
-import { useTransactionStore } from "@/lib/transactionStore"; // Import the store
-
-interface Transaction {
-  message: string;
-  transactionHash: string;
-  from: string;
-  status: string;
-  events: {
-    name: string;
-    args: {
-      user: string;
-      uniqueId: string;
-      ipfsHash?: string;
-      reputationGain?: string;
-    };
-  }[];
-  gasUsed: string;
-}
+import { useTransactionStore } from "@/lib/transactionStore";
+import { Upload, Brain, AlertTriangle } from "lucide-react"; // Add icons from lucide-react
 
 export default function AllTransactions() {
   const { getToken } = useAuth();
-  const setTransactions = useTransactionStore((state) => state.setTransactions); // Get the setTransactions action
+  const setTransactions = useTransactionStore((state) => state.setTransactions);
+  const groupedTransactions = useTransactionStore(
+    (state) => state.groupedTransactions
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -53,8 +35,6 @@ export default function AllTransactions() {
           }
         );
 
-        console.log("Response from /allSubmisson:", response.data);
-
         const { transactions } = response.data;
 
         if (!transactions || transactions.length === 0) {
@@ -63,9 +43,9 @@ export default function AllTransactions() {
           return;
         }
 
-        setTransactions(transactions); // Store the transactions in zustand
+        setTransactions(transactions);
         setLoading(false);
-      } catch (err: any) {
+      } catch (err) {
         console.error("Error fetching transactions:", err);
         setError(
           err.response?.data?.message ||
@@ -79,10 +59,44 @@ export default function AllTransactions() {
     fetchAllSubmissionsAndTransactions();
   }, [getToken, setTransactions]);
 
-  const transactions = useTransactionStore((state) => state.transactions); // Get the transactions from the store
-
-  const shortenAddress = (address: string) =>
+  const shortenAddress = (address) =>
     `${address.slice(0, 6)}...${address.slice(-4)}`;
+
+  const getTransactionType = (events) => {
+    if (events.some((e) => e.name === "ModelTrained")) return "Training";
+    if (events.some((e) => e.name === "UserPenalized")) return "Penalty";
+    if (events.some((e) => e.name === "DataSubmitted")) return "Submission";
+    return "Other";
+  };
+
+  const getCardStyles = (type) => {
+    switch (type) {
+      case "Training":
+        return {
+          border: "border-purple-500",
+          icon: <Brain className="h-5 w-5 text-purple-400" />,
+          bg: "bg-purple-500/10",
+        };
+      case "Penalty":
+        return {
+          border: "border-red-500",
+          icon: <AlertTriangle className="h-5 w-5 text-red-400" />,
+          bg: "bg-red-500/10",
+        };
+      case "Submission":
+        return {
+          border: "border-blue-500",
+          icon: <Upload className="h-5 w-5 text-blue-400" />,
+          bg: "bg-blue-500/10",
+        };
+      default:
+        return {
+          border: "border-gray-500",
+          icon: null,
+          bg: "bg-gray-500/10",
+        };
+    }
+  };
 
   if (loading) {
     return (
@@ -100,7 +114,7 @@ export default function AllTransactions() {
     );
   }
 
-  if (transactions.length === 0) {
+  if (groupedTransactions.length === 0) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center py-20">
         <p className="text-xl text-gray-300">No transactions found.</p>
@@ -120,48 +134,36 @@ export default function AllTransactions() {
         <h1 className="text-5xl font-bold text-white text-center mb-12 drop-shadow-lg">
           All Transactions
         </h1>
-
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {transactions.map((transaction, index) => {
-            const isPenalized = transaction.events.some(
-              (event) => event.name === "UserPenalized"
-            );
-            const statusColor = isPenalized ? "text-red-400" : "text-green-400";
+          {groupedTransactions.map((transaction, index) => {
+            const type = getTransactionType(transaction.events);
+            const { border, icon, bg } = getCardStyles(type);
+            const timestamp = new Date(transaction.created_at).toLocaleString();
 
             return (
               <Card
                 key={index}
-                className="bg-gradient-to-br from-blue-700/20 to-blue-500/20 border-blue-500/20"
+                className={`border-2 ${border} ${bg} transition-transform hover:scale-105`}
               >
-                <CardHeader>
-                  <CardTitle className="text-white text-xl">
-                    Transaction #{index + 1}
+                <CardHeader className="flex flex-row items-center gap-2">
+                  {icon}
+                  <CardTitle className="text-white text-lg">
+                    {type}
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-3">
-                  <div>
-                    <p className="text-gray-200">
-                      <strong>Status:</strong>{" "}
-                      <span className={statusColor}>
-                        {isPenalized ? "Penalized" : "Successful Submission"}
-                      </span>
-                    </p>
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-white">
-                      Transaction Hash
-                    </h3>
-                    <p className="text-gray-200">
-                      {shortenAddress(transaction.transactionHash)}
-                    </p>
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-white">From</h3>
-                    <p className="text-gray-200">{shortenAddress(transaction.from)}</p>
-                  </div>
-                  <Link href={`/transactions/${transaction.transactionHash}`}>
-                    <Button className="w-full bg-blue-600 text-white hover:bg-blue-700">
-                      View Details
+                <CardContent className="space-y-2">
+                  <p className="text-gray-200">
+                    <strong>Hash:</strong> {shortenAddress(transaction.txHash)}
+                  </p>
+                  <p className="text-gray-200">
+                    <strong>From:</strong> {shortenAddress(transaction.walletAddress)}
+                  </p>
+                  <p className="text-gray-200 text-sm">
+                    <strong>When:</strong> {timestamp}
+                  </p>
+                  <Link href={`/transactions/${transaction.txHash}`}>
+                    <Button className="w-full mt-2 bg-blue-600 text-white hover:bg-blue-700">
+                      Details
                     </Button>
                   </Link>
                 </CardContent>
