@@ -44,6 +44,21 @@ interface User {
   walletAddress: string;
 }
 
+interface Model {
+  _id: string;
+  _creationTime: number;
+  created_at: number;
+  dataCount: number;
+  metrics: {
+    accuracy: number;
+    f1Score: number;
+    precision: number;
+    recall: number;
+  };
+  modelType: string;
+  status: string;
+}
+
 interface Notification {
   _id: string;
   email: string;
@@ -57,6 +72,7 @@ export default function AdminDashboard() {
   const [trainResult, setTrainResult] = useState<TrainResult | null>(null);
   const [validUsers, setValidUsers] = useState<User[]>([]);
   const [invalidUsers, setInvalidUsers] = useState<User[]>([]);
+  const [modelss, setModels] = useState<Model[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [selectedModel, setSelectedModel] = useState<string | null>(null);
   const [selectedSector, setSelectedSector] = useState<"healthcare" | "finance">(
@@ -66,6 +82,7 @@ export default function AdminDashboard() {
     train: false,
     users: false,
     notifications: false,
+    modelss: false,
   });
   const [error, setError] = useState<string | null>(null);
 
@@ -106,6 +123,24 @@ export default function AdminDashboard() {
     }
   };
 
+  // Fetch models
+  const fetchModels = async (tokenFetcher: () => Promise<string | null>) => {
+    setLoading((prev) => ({ ...prev, models: true }));
+    setError(null);
+    try {
+      const token = await tokenFetcher();
+      const response = await fetch(`${API_BASE_URL}/allmodels`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok) throw new Error("Failed to fetch models");
+      const data: Model[] = await response.json();
+      setModels(data);
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setLoading((prev) => ({ ...prev, models: false }));
+    }
+  };
   // Fetch invalid users filtered by modelId
   const fetchInvalidUsers = async (
     tokenFetcher: () => Promise<string | null>,
@@ -195,6 +230,7 @@ export default function AdminDashboard() {
     }
   };
 
+
   useEffect(() => {
     if (selectedModel) {
       fetchValidUsers(getToken, selectedModel);
@@ -204,6 +240,7 @@ export default function AdminDashboard() {
       fetchInvalidUsers(getToken);
     }
     fetchNotifications(getToken);
+    fetchModels(getToken);
   }, [getToken, selectedModel]);
 
   // Check if there are valid submissions for a specific model and sector
@@ -278,11 +315,10 @@ export default function AdminDashboard() {
                     <div
                       key={model.id}
                       onClick={() => setSelectedModel(model.id)}
-                      className={`p-4 rounded-md cursor-pointer ${
-                        selectedModel === model.id
+                      className={`p-4 rounded-md cursor-pointer ${selectedModel === model.id
                           ? "bg-blue-600/50 border-blue-600"
                           : "bg-blue-700/20 hover:bg-blue-600/30"
-                      } border border-blue-500/30`}
+                        } border border-blue-500/30`}
                     >
                       <h3 className="text-lg font-semibold text-white">{model.name}</h3>
                       <Button
@@ -427,11 +463,10 @@ export default function AdminDashboard() {
                     {notifications.map((notification) => (
                       <li
                         key={notification._id}
-                        className={`p-4 rounded-md ${
-                          notification.status === "success"
+                        className={`p-4 rounded-md ${notification.status === "success"
                             ? "bg-green-900/20 border border-green-500/30"
                             : "bg-red-900/20 border border-red-500/30"
-                        }`}
+                          }`}
                       >
                         <div className="text-gray-200">
                           <strong>Email:</strong> {notification.email}
@@ -496,14 +531,55 @@ export default function AdminDashboard() {
               <CardHeader>
                 <CardTitle className="text-white">Model Management</CardTitle>
                 <CardDescription className="text-gray-300">
-                  View and manage trained models (to be implemented).
+                  View details of trained models.
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-300">
-                  Model management functionality will be added in future
-                  development.
-                </p>
+                {loading.modelss ? (
+                  <p className="text-gray-300">Loading models...</p>
+                ) : models.length > 0 ? (
+                  <ul className="space-y-6 max-h-64 overflow-y-auto">
+                    {modelss.map((model) => (
+                      <li
+                        key={model._id}
+                        className="p-4 rounded-md bg-blue-700/20 border border-blue-500/30"
+                      >
+                        <div className="text-gray-200">
+                          <strong>Model Type:</strong> {model.modelType}
+                        </div>
+                        <div className="text-gray-200">
+                          <strong>Created:</strong>{" "}
+                          {new Date(model.created_at).toLocaleString()}
+                        </div>
+                        <div className="text-gray-200">
+                          <strong>Data Count:</strong> {model.dataCount}
+                        </div>
+                        <div className="text-gray-200">
+                          <strong>Metrics:</strong>
+                          <ul className="ml-4">
+                            <li>Accuracy: {(model.metrics.accuracy * 100).toFixed(2)}%</li>
+                            <li>F1 Score: {(model.metrics.f1Score * 100).toFixed(2)}%</li>
+                            <li>Precision: {(model.metrics.precision * 100).toFixed(2)}%</li>
+                            <li>Recall: {(model.metrics.recall * 100).toFixed(2)}%</li>
+                          </ul>
+                        </div>
+                        <div className="text-gray-200">
+                          <strong>Status:</strong>{" "}
+                          <span
+                            className={
+                              model.status === "success" ? "text-green-400" : "text-red-400"
+                            }
+                          >
+                            {model.status}
+                          </span>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-gray-300">No models found.</p>
+                )}
+                {error && <p className="text-red-400 mt-4">Error: {error}</p>}
               </CardContent>
             </Card>
           </TabsContent>
