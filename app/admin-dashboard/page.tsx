@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BsGear, BsPeople } from "react-icons/bs";
 import { useUser } from "@clerk/nextjs";
 import { useAuth } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
 import {
   Select,
   SelectContent,
@@ -88,6 +89,7 @@ export default function AdminDashboard() {
 
   const { user } = useUser();
   const { getToken } = useAuth();
+  const router = useRouter();
 
   const API_BASE_URL =
     process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3000";
@@ -98,6 +100,10 @@ export default function AdminDashboard() {
     { id: "model3", name: "Logistic Regression Model" },
   ];
 
+  // Handle Create Admin button click
+  const handleCreateAdminClick = () => {
+    router.push("/create-admin"); 
+  };
   // Fetch valid users filtered by modelId
   const fetchValidUsers = async (
     tokenFetcher: () => Promise<string | null>,
@@ -515,13 +521,13 @@ export default function AdminDashboard() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Button className="w-full py-4 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-600/90 transition-colors flex items-center justify-center">
+                <Button
+                  onClick={handleCreateAdminClick} 
+                  className="w-full py-4 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-600/90 transition-colors flex items-center justify-center"
+                >
                   <BsPeople className="h-6 w-6 mr-2" />
                   Create New Admin
                 </Button>
-                <p className="text-gray-300 mt-4">
-                  (Functionality to be implemented with a future endpoint)
-                </p>
               </CardContent>
             </Card>
           </TabsContent>
