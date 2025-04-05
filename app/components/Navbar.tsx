@@ -12,6 +12,7 @@ export default function Navbar() {
 
   const links = [
     { label: "Transactions", href: "/transactions" },
+    { label: "Reputation", href: "/reputation"},
     { label: "Admin Dashboard", href: "/admin-dashboard", requiredRole: "admin" },
     { label: "Contact Us", href: "/#contact" },
   ];
