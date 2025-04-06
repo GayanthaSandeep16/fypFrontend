@@ -2,17 +2,15 @@
 
 import { SignInButton, SignUpButton, UserButton, SignedIn, SignedOut, useUser } from "@clerk/nextjs";
 import Link from "next/link";
+import { ClientOnly } from "./ClientOnly"; // Adjust the import path as needed
 
 export default function Navbar() {
   const { user } = useUser();
   const userRole = user?.publicMetadata?.role as string | undefined;
-  
-
- 
 
   const links = [
     { label: "Transactions", href: "/transactions" },
-    { label: "Reputation", href: "/reputation"},
+    { label: "Reputation", href: "/reputation" },
     { label: "Admin Dashboard", href: "/admin-dashboard", requiredRole: "admin" },
     { label: "Contact Us", href: "/#contact" },
   ];
@@ -21,27 +19,27 @@ export default function Navbar() {
     <div className="bg-gray-900 border-b border-indigo-800/50 w-full">
       <header className="relative z-10 px-4 py-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
         <div className="flex items-center justify-between">
-          {/* Logo and Brand */}
           <div className="flex items-center">
             <Link href="/" className="flex items-center space-x-3">
               <span className="text-white text-2xl font-extrabold tracking-tight">
                 PureChain
               </span>
             </Link>
-
-            {/* Navigation Links */}
             <nav className="hidden ml-10 space-x-6 md:flex">
               {links.map((link) => {
-                // If the link requires a role, check if the user's role matches
                 if (link.requiredRole) {
-                  // Normalize both roles to lowercase for comparison
-                  const normalizedUserRole = userRole?.toLowerCase();
-                  const normalizedRequiredRole = link.requiredRole.toLowerCase();
-
-
-                  if (normalizedUserRole !== normalizedRequiredRole) {
-                    return null;
-                  }
+                  return (
+                    <ClientOnly key={link.label}>
+                      {userRole?.toLowerCase() === link.requiredRole.toLowerCase() && (
+                        <Link
+                          href={link.href}
+                          className="text-gray-300 hover:text-indigo-300 text-base font-medium transition-colors duration-200"
+                        >
+                          {link.label}
+                        </Link>
+                      )}
+                    </ClientOnly>
+                  );
                 }
                 return (
                   <Link
@@ -55,8 +53,6 @@ export default function Navbar() {
               })}
             </nav>
           </div>
-
-          {/* Auth Buttons */}
           <div className="flex items-center space-x-4">
             <SignedOut>
               <SignInButton mode="modal">

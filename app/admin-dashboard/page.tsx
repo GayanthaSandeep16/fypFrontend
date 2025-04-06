@@ -33,7 +33,7 @@ interface User {
   created_at: number;
   dataHash: string;
   datasetName: string;
-  sector: string; // Updated to string to handle case variations
+  sector: string;
   user: {
     email: string;
     name: string;
@@ -73,7 +73,7 @@ export default function AdminDashboard() {
   const [trainResult, setTrainResult] = useState<TrainResult | null>(null);
   const [validUsers, setValidUsers] = useState<User[]>([]);
   const [invalidUsers, setInvalidUsers] = useState<User[]>([]);
-  const [modelss, setModels] = useState<Model[]>([]);
+  const [trainedModels, setTrainedModels] = useState<Model[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [selectedModel, setSelectedModel] = useState<string | null>(null);
   const [selectedSector, setSelectedSector] = useState<"healthcare" | "finance">(
@@ -83,7 +83,7 @@ export default function AdminDashboard() {
     train: false,
     users: false,
     notifications: false,
-    modelss: false,
+    trainedModels: false,
   });
   const [error, setError] = useState<string | null>(null);
 
@@ -102,7 +102,7 @@ export default function AdminDashboard() {
 
   // Handle Create Admin button click
   const handleCreateAdminClick = () => {
-    router.push("/create-admin"); 
+    router.push("/create-admin");
   };
   // Fetch valid users filtered by modelId
   const fetchValidUsers = async (
@@ -131,7 +131,7 @@ export default function AdminDashboard() {
 
   // Fetch models
   const fetchModels = async (tokenFetcher: () => Promise<string | null>) => {
-    setLoading((prev) => ({ ...prev, models: true }));
+    setLoading((prev) => ({ ...prev, trainedModels: true })); // Updated key
     setError(null);
     try {
       const token = await tokenFetcher();
@@ -140,11 +140,11 @@ export default function AdminDashboard() {
       });
       if (!response.ok) throw new Error("Failed to fetch models");
       const data: Model[] = await response.json();
-      setModels(data);
+      setTrainedModels(data); // Updated setter
     } catch (err) {
       setError((err as Error).message);
     } finally {
-      setLoading((prev) => ({ ...prev, models: false }));
+      setLoading((prev) => ({ ...prev, trainedModels: false })); // Updated key
     }
   };
   // Fetch invalid users filtered by modelId
@@ -322,8 +322,8 @@ export default function AdminDashboard() {
                       key={model.id}
                       onClick={() => setSelectedModel(model.id)}
                       className={`p-4 rounded-md cursor-pointer ${selectedModel === model.id
-                          ? "bg-blue-600/50 border-blue-600"
-                          : "bg-blue-700/20 hover:bg-blue-600/30"
+                        ? "bg-blue-600/50 border-blue-600"
+                        : "bg-blue-700/20 hover:bg-blue-600/30"
                         } border border-blue-500/30`}
                     >
                       <h3 className="text-lg font-semibold text-white">{model.name}</h3>
@@ -470,8 +470,8 @@ export default function AdminDashboard() {
                       <li
                         key={notification._id}
                         className={`p-4 rounded-md ${notification.status === "success"
-                            ? "bg-green-900/20 border border-green-500/30"
-                            : "bg-red-900/20 border border-red-500/30"
+                          ? "bg-green-900/20 border border-green-500/30"
+                          : "bg-red-900/20 border border-red-500/30"
                           }`}
                       >
                         <div className="text-gray-200">
@@ -522,7 +522,7 @@ export default function AdminDashboard() {
               </CardHeader>
               <CardContent>
                 <Button
-                  onClick={handleCreateAdminClick} 
+                  onClick={handleCreateAdminClick}
                   className="w-full py-4 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-600/90 transition-colors flex items-center justify-center"
                 >
                   <BsPeople className="h-6 w-6 mr-2" />
@@ -541,11 +541,11 @@ export default function AdminDashboard() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {loading.modelss ? (
+                {loading.trainedModels ? (
                   <p className="text-gray-300">Loading models...</p>
-                ) : models.length > 0 ? (
+                ) : trainedModels.length > 0 ? (
                   <ul className="space-y-6 max-h-64 overflow-y-auto">
-                    {modelss.map((model) => (
+                    {trainedModels.map((model) => (
                       <li
                         key={model._id}
                         className="p-4 rounded-md bg-blue-700/20 border border-blue-500/30"
