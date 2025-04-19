@@ -30,7 +30,7 @@ export default function Reputation() {
 
       try {
         const token = await getToken();
-        const response = await fetch("http://54.169.111.231:3000/api/reputation", {
+        const response = await fetch("https://54.169.111.231/api/reputation", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
