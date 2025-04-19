@@ -27,7 +27,7 @@ export default function AllTransactions() {
         }
 
         const response = await axios.post(
-          "http://localhost:3000/api/allSubmisson",
+          "http://54.169.111.231:3000/api/allSubmisson",
           {},
           {
             headers: { Authorization: `Bearer ${token}` },

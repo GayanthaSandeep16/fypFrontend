@@ -27,7 +27,7 @@ export default function Upload() {
     const { getToken } = useAuth();
 
     if (!user) {
-        redirect("http://localhost:5173/sign-in");
+        redirect("https://fyp-frontend-bay.vercel.app/sign-in");
     }
 
     const models: Model[] = [

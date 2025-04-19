@@ -91,7 +91,7 @@ export default function AdminDashboard() {
   const router = useRouter();
 
   const API_BASE_URL =
-    process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3000";
+    process.env.NEXT_PUBLIC_API_BASE_URL || "http://54.169.111.231:3000";
 
   const models = [
     { id: "model1", name: "Random Forest Model" },
