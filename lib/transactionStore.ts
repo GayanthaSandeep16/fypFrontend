@@ -2,7 +2,7 @@ import { create } from "zustand";
 
 interface TransactionEvent {
   name: string;
-  args: any;
+  args: Record<string, unknown>;
   type: string;
   submissionId?: string;
 }
@@ -18,7 +18,7 @@ interface GroupedTransaction {
 
 interface TransactionStore {
   groupedTransactions: GroupedTransaction[];
-  setTransactions: (transactions: any[]) => void;
+  setTransactions: (transactions: Array<Record<string, unknown>>) => void;
   getTransactionByHash: (txHash: string) => GroupedTransaction | undefined;
 }
 
@@ -27,22 +27,26 @@ export const useTransactionStore = create<TransactionStore>((set, get) => ({
   setTransactions: (transactions) => {
     const transactionMap = new Map<string, GroupedTransaction>();
     transactions.forEach((tx) => {
-      if (!transactionMap.has(tx.txHash)) {
-        transactionMap.set(tx.txHash, {
-          txHash: tx.txHash,
-          blockNumber: tx.blockNumber,
-          status: tx.status,
-          created_at: tx.created_at,
-          walletAddress: tx.walletAddress,
+      const txHash = tx.txHash as string;
+      if (!transactionMap.has(txHash)) {
+        transactionMap.set(txHash, {
+          txHash: txHash,
+          blockNumber: tx.blockNumber as string,
+          status: tx.status as string,
+          created_at: tx.created_at as number,
+          walletAddress: tx.walletAddress as string,
           events: [],
         });
       }
-      transactionMap.get(tx.txHash).events.push({
-        name: tx.eventName,
-        args: tx.eventArgs,
-        type: tx.type,
-        submissionId: tx.submissionId,
-      });
+      const transaction = transactionMap.get(txHash);
+      if (transaction) {
+        transaction.events.push({
+          name: tx.eventName as string,
+          args: tx.eventArgs as Record<string, unknown>,
+          type: tx.type as string,
+          submissionId: tx.submissionId as string | undefined,
+        });
+      }
     });
     const grouped = Array.from(transactionMap.values());
     set({ groupedTransactions: grouped });

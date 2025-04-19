@@ -16,7 +16,7 @@ export default function TransactionDetails() {
   );
   const [transaction, setTransaction] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!txHash) {
