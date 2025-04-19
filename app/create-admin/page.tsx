@@ -54,7 +54,7 @@ export default function CreateAdmin() {
       const token = await getToken();
       console.log("Token:", token);
 
-      const response = await fetch("https://54.169.111.231/api/create-admin", {
+      const response = await fetch("https://backend.purechain.store/api/create-admin", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

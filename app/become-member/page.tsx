@@ -96,7 +96,7 @@ export default function BecomeMember() {
             };
             console.log("Request body:", requestBody); // Debug: Log the body before sending
 
-            const response = await fetch('https://54.169.111.231/api/create-user', {
+            const response = await fetch('https://backend.purechain.store/api/create-user', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

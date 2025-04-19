@@ -27,7 +27,7 @@ export default function AllTransactions() {
         }
 
         const response = await axios.post(
-          "https://54.169.111.231/api/allSubmisson",
+          "https://backend.purechain.store/api/allSubmisson",
           {},
           {
             headers: { Authorization: `Bearer ${token}` },

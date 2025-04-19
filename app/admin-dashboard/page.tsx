@@ -91,7 +91,7 @@ export default function AdminDashboard() {
   const router = useRouter();
 
   const API_BASE_URL =
-    process.env.NEXT_PUBLIC_API_BASE_URL || "https://54.169.111.231";
+    process.env.NEXT_PUBLIC_API_BASE_URL || "https://backend.purechain.store";
 
   const models = [
     { id: "model1", name: "Random Forest Model" },
