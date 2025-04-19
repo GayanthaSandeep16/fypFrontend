@@ -34,14 +34,14 @@ export default function Upload() {
         {
             id: "model1",
             name: "Random Forest Model",
-            description: "A powerful ensemble learning model that uses multiple decision trees to make predictions. It’s great for classification and regression tasks, handling complex datasets with high accuracy.",
+            description: "A powerful ensemble learning model that uses multiple decision trees to make predictions. It's great for classification and regression tasks, handling complex datasets with high accuracy.",
             note: "Best for labeled datasets with features and target variables (e.g., predicting a category or numerical value). Ensure your CSV has a target column for supervised learning.",
             icon: <BsShieldCheck className="h-8 w-8 text-blue-400" />,
         },
         {
             id: "model2",
             name: "K-Means Clustering Model",
-            description: "An unsupervised learning model that groups data into clusters based on similarity. It’s useful for discovering patterns or segments in your data without predefined labels.",
+            description: "An unsupervised learning model that groups data into clusters based on similarity. It's useful for discovering patterns or segments in your data without predefined labels.",
             note: "Ideal for unlabeled datasets where you want to find natural groupings (e.g., customer segmentation). Your CSV should contain numerical features without a target column.",
             icon: <BsCodeSquare className="h-8 w-8 text-blue-400" />,
         },
@@ -101,7 +101,7 @@ export default function Upload() {
 
     const handleSubmit = async () => {
         if (!selectedModel || !file || !user) {
-            setMessage("Please select a model, upload a file, and ensure you’re signed in.");
+            setMessage("Please select a model, upload a file, and ensure you're signed in.");
             return;
         }
 
@@ -125,23 +125,24 @@ export default function Upload() {
                 },
             });
             setResult({ message: response.data.message, ipfsHash: response.data.ipfsHash });
-         } catch (error: any) {
+         } catch (error: Error | unknown) {
         // Improved error handling
-        if (error.response) {
+        if ('response' in (error as any)) {
             // The request was made and the server responded with a status code
-            if (error.response.data.error) {
-                setError(error.response.data.error);
-            } else if (error.response.data.message) {
-                setError(error.response.data.message);
+            const axiosError = error as any;
+            if (axiosError.response?.data?.error) {
+                setError(axiosError.response.data.error);
+            } else if (axiosError.response?.data?.message) {
+                setError(axiosError.response.data.message);
             } else {
                 setError("An error occurred while processing your request.");
             }
-        } else if (error.request) {
+        } else if ('request' in (error as any)) {
             // The request was made but no response was received
             setError("No response from server. Please try again later.");
         } else {
             // Something happened in setting up the request
-            setError(error.message || "An unexpected error occurred.");
+            setError((error as Error)?.message || "An unexpected error occurred.");
         }
     } finally {
         setIsLoading(false);
@@ -154,7 +155,7 @@ export default function Upload() {
         <div className="min-h-screen bg-black py-20">
             <div className="container mx-auto px-6">
                 <h1 className="text-5xl font-bold text-white text-center mb-12 drop-shadow-lg">
-                    Unleash Your <span className="text-blue-500">Data’s Potential</span>
+                    Unleash Your <span className="text-blue-500">Data&apos;s Potential</span>
                 </h1>
                 <section className="mb-20">
                     <h2 className="text-3xl font-semibold text-white text-center mb-8">Choose Your Preferred Model</h2>

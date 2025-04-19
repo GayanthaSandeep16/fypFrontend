@@ -87,7 +87,6 @@ export default function AdminDashboard() {
   });
   const [error, setError] = useState<string | null>(null);
 
-  const { user } = useUser();
   const { getToken } = useAuth();
   const router = useRouter();
 

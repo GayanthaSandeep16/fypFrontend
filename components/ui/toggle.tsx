@@ -13,6 +13,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
   </Select>
 </div>
 
-function setSelectedSector(value: string): void {
+function setSelectedSector(): void {
     throw new Error("Function not implemented.");
 }
