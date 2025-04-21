@@ -9,8 +9,8 @@ export default function Navbar() {
   const userRole = user?.publicMetadata?.role as string | undefined;
 
   const links = [
-    { label: "Transactions", href: "/transactions" },
-    { label: "Reputation", href: "/reputation" },
+    { label: "Transactions", href: "/transactions", requiresAuth: true },
+    { label: "Reputation", href: "/reputation", requiresAuth: true },
     { label: "Admin Dashboard", href: "/admin-dashboard", requiredRole: "admin" },
     { label: "Contact Us", href: "/#contact" },
   ];
@@ -27,20 +27,39 @@ export default function Navbar() {
             </Link>
             <nav className="hidden ml-10 space-x-6 md:flex">
               {links.map((link) => {
+                // Handle admin role links
                 if (link.requiredRole) {
                   return (
                     <ClientOnly key={link.label}>
-                      {userRole?.toLowerCase() === link.requiredRole.toLowerCase() && (
+                      <SignedIn>
+                        {userRole?.toLowerCase() === link.requiredRole.toLowerCase() && (
+                          <Link
+                            href={link.href}
+                            className="text-gray-300 hover:text-indigo-300 text-base font-medium transition-colors duration-200"
+                          >
+                            {link.label}
+                          </Link>
+                        )}
+                      </SignedIn>
+                    </ClientOnly>
+                  );
+                }
+                // Handle links that require authentication
+                if (link.requiresAuth) {
+                  return (
+                    <ClientOnly key={link.label}>
+                      <SignedIn>
                         <Link
                           href={link.href}
                           className="text-gray-300 hover:text-indigo-300 text-base font-medium transition-colors duration-200"
                         >
                           {link.label}
                         </Link>
-                      )}
+                      </SignedIn>
                     </ClientOnly>
                   );
                 }
+                // Handle links available to all (Contact Us)
                 return (
                   <Link
                     key={link.label}
