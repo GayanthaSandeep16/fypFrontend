@@ -118,7 +118,7 @@ export default function Upload() {
         
         try {
             const token = await getToken();
-            const response = await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/submit-data`, formData, {
+            const response = await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/submit-data`, formData, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                     "Content-Type": "multipart/form-data",
