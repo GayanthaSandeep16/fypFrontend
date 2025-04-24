@@ -49,7 +49,7 @@ export default function Footer() {
                         <ul className="space-y-3 text-sm">
                             <li>
                                 <Link
-                                    href="/about"
+                                    href="/"
                                     className="text-gray-300 hover:text-blue-400 transition-colors"
                                 >
                                     About PureChain
@@ -57,7 +57,7 @@ export default function Footer() {
                             </li>
                             <li>
                                 <Link
-                                    href="/demo"
+                                    href="/"
                                     className="text-gray-300 hover:text-blue-400 transition-colors"
                                 >
                                     Prototype Demo
@@ -65,7 +65,7 @@ export default function Footer() {
                             </li>
                             <li>
                                 <Link
-                                    href="/build"
+                                    href="/"
                                     className="text-gray-300 hover:text-blue-400 transition-colors"
                                 >
                                     Contribute
@@ -88,7 +88,7 @@ export default function Footer() {
                             </li>
                             <li>
                                 <Link
-                                    href="/contact"
+                                    href="/#contact"
                                     className="hover:text-blue-400 transition-colors"
                                 >
                                     Get in Touch
