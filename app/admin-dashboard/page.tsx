@@ -377,25 +377,24 @@ export default function AdminDashboard() {
                       {validUsers.map((user) => (
                         <li key={user._id} className="text-gray-200">
                           <div>
-                            <strong>Name:</strong> {user.user.name}
+                            <strong>Name:</strong> {user.user ? user.user.name : "N/A"}
                           </div>
                           <div>
-                            <strong>Email:</strong> {user.user.email}
+                            <strong>Email:</strong> {user.user ? user.user.email : "N/A"}
                           </div>
                           <div>
-                            <strong>Dataset:</strong> {user.datasetName}
+                            <strong>Dataset:</strong> {user.datasetName || "N/A"}
                           </div>
                           <div>
-                            <strong>Sector:</strong> {user.sector}
+                            <strong>Sector:</strong> {user.sector || "N/A"}
                           </div>
                           <div>
                             <strong>Model:</strong>{" "}
-                            {models.find((m) => m.id === user.modelId)?.name ||
-                              user.modelId}
+                            {models.find((m) => m.id === user.modelId)?.name || user.modelId || "N/A"}
                           </div>
                           <div>
                             <strong>Submitted:</strong>{" "}
-                            {new Date(user.created_at).toLocaleString()}
+                            {user.created_at ? new Date(user.created_at).toLocaleString() : "N/A"}
                           </div>
                         </li>
                       ))}
@@ -421,25 +420,24 @@ export default function AdminDashboard() {
                       {invalidUsers.map((user) => (
                         <li key={user._id} className="text-gray-200">
                           <div>
-                            <strong>Name:</strong> {user.user.name}
+                            <strong>Name:</strong> {user.user ? user.user.name : "N/A"}
                           </div>
                           <div>
-                            <strong>Email:</strong> {user.user.email}
+                            <strong>Email:</strong> {user.user ? user.user.email : "N/A"}
                           </div>
                           <div>
-                            <strong>Dataset:</strong> {user.datasetName}
+                            <strong>Dataset:</strong> {user.datasetName || "N/A"}
                           </div>
                           <div>
-                            <strong>Sector:</strong> {user.sector}
+                            <strong>Sector:</strong> {user.sector || "N/A"}
                           </div>
                           <div>
                             <strong>Model:</strong>{" "}
-                            {models.find((m) => m.id === user.modelId)?.name ||
-                              user.modelId}
+                            {models.find((m) => m.id === user.modelId)?.name || user.modelId || "N/A"}
                           </div>
                           <div>
                             <strong>Submitted:</strong>{" "}
-                            {new Date(user.created_at).toLocaleString()}
+                            {user.created_at ? new Date(user.created_at).toLocaleString() : "N/A"}
                           </div>
                         </li>
                       ))}
